@@ -1,6 +1,5 @@
 import locale
 from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam
 
 GPT_ENABLED = True # Set to False to disable AI-powered analysis
 OPENAI_API_KEY = "your_openai_api_key"
