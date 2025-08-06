@@ -7,6 +7,7 @@ from gpt_helper import ask_gpt_about_file, GPT_ENABLED
 
 TOP_HEAVISET_DIRS = 15
 
+
 def get_size(path: str) -> int:
     total_size = 0
     try:
@@ -34,4 +35,18 @@ def scan_folders(root_path: str, limit=TOP_HEAVISET_DIRS) -> List[Tuple[str, int
     return folder_sizes[:limit]
 
 
-            
+def main():
+    path = input("Укажи путь к папке для анализа (например, C:/ или /home/user): ").strip()
+    results = scan_folders(path)
+
+    print("\n[TOP ДИРЕКТОРИЙ ПО РАЗМЕРУ]")
+    for folder, size in results:
+        size_gb = round(size / (1024**3), 2)
+        print(f"{folder}: {size_gb} GB")
+
+        if GPT_ENABLED:
+            response = ask_gpt_about_file(folder, size)
+            print(f"[GPT]: {response}\n")
+
+if __name__ == "__main__":
+    main()
