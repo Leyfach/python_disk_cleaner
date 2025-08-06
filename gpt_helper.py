@@ -2,7 +2,7 @@ import locale
 from openai import OpenAI
 
 GPT_ENABLED = True # Set to False to disable AI-powered analysis
-OPENAI_API_KEY = "your_openai_api_key"
+OPENAI_API_KEY = ""
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 LANG = locale.getdefaultlocale()[0]

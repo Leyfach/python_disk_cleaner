@@ -1,52 +1,90 @@
 import os
 from pathlib import Path
-import openai
 from typing import List, Tuple
+import locale
 
 from gpt_helper import ask_gpt_about_file, GPT_ENABLED
 
-TOP_HEAVISET_DIRS = 15
+TOP_HEAVIEST_ITEMS = 15
+
+LANG = locale.getdefaultlocale()[0]
+if LANG.startswith("ru"):
+    TEXTS = {
+        "enter_path": "Укажи путь к папке для анализа (например, C:/ или /home/user): ",
+        "top_list": "\n[ТОП ЭЛЕМЕНТОВ ПО РАЗМЕРУ]",
+        "choose_next": "\nВведите номер папки, чтобы провалиться в неё, или нажмите Enter для выхода: ",
+        "scanning": "Сканируем",
+    }
+else:
+    TEXTS = {
+        "enter_path": "Enter a folder path to analyze (e.g., C:/ or /home/user): ",
+        "top_list": "\n[TOP ITEMS BY SIZE]",
+        "choose_next": "\nEnter a number to drill into that folder or press Enter to exit: ",
+        "scanning": "Scanning",
+    }
 
 
 def get_size(path: str) -> int:
-    total_size = 0
     try:
-        for dirpath, _, filenames in os.walk(path):
-            for f in filenames:
-                try:
-                    fp = os.path.join(dirpath, f)
-                    total_size += os.path.getsize(fp)
-                except Exception as e:
-                    continue
-    except Exception as e:
+        return os.path.getsize(path)
+    except:
+        return 0
+
+def scan_items(path: str, limit=TOP_HEAVIEST_ITEMS) -> List[Tuple[str, int]]:
+    sizes = []
+    p = Path(path)
+    try:
+        for item in p.iterdir():
+            try:
+                if item.is_dir():
+                    print(f"{TEXTS['scanning']} {item}...")
+                    size = sum(get_size(os.path.join(dirpath, f))
+                               for dirpath, _, files in os.walk(item)
+                               for f in files)
+                else:
+                    size = item.stat().st_size
+                sizes.append((str(item), size))
+            except Exception:
+                continue
+    except Exception:
         pass
-    return total_size
-
-def scan_folders(root_path: str, limit=TOP_HEAVISET_DIRS) -> List[Tuple[str, int]]:
-    folder_sizes = []
-    root = Path(root_path)
-    for p in root.iterdir():
-        if p.is_dir():
-            print(f"Scanning {p}...")
-            size = get_size(str(p))
-            folder_sizes.append((str(p), size))
-
-    folder_sizes.sort(key=lambda x: x[1], reverse=True)
-    return folder_sizes[:limit]
+    sizes.sort(key=lambda x: x[1], reverse=True)
+    return sizes[:limit]
 
 
-def main():
-    path = input("Укажи путь к папке для анализа (например, C:/ или /home/user): ").strip()
-    results = scan_folders(path)
+def interactive_scan():
+    current_path = input(TEXTS["enter_path"]).strip()
 
-    print("\n[TOP ДИРЕКТОРИЙ ПО РАЗМЕРУ]")
-    for folder, size in results:
-        size_gb = round(size / (1024**3), 2)
-        print(f"{folder}: {size_gb} GB")
+    while True:
+        results = scan_items(current_path)
 
-        if GPT_ENABLED:
-            response = ask_gpt_about_file(folder, size)
-            print(f"[GPT]: {response}\n")
+        print(TEXTS["top_list"])
+        for idx, (item, size) in enumerate(results):
+            size_gb = round(size / (1024**3), 2)
+            print(f"[{idx}] {item}: {size_gb} GB")
+
+            if GPT_ENABLED:
+                response = ask_gpt_about_file(item, size)
+                print(f"[GPT]: {response}\n")
+
+        choice = input(TEXTS["choose_next"]).strip()
+        if not choice:
+            break
+
+        if choice.isdigit():
+            idx = int(choice)
+            if 0 <= idx < len(results):
+                selected_path = results[idx][0]
+                if Path(selected_path).is_dir():
+                    current_path = selected_path
+                else:
+                    print("Not a directory. Exiting.")
+                    break
+            else:
+                print("Invalid selection.")
+        else:
+            print("Invalid input.")
+
 
 if __name__ == "__main__":
-    main()
+    interactive_scan()
