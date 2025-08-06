@@ -1,27 +1,17 @@
 import os
 from pathlib import Path
 from typing import List, Tuple
-import locale
 
 from gpt_helper import ask_gpt_about_file, GPT_ENABLED
 
 TOP_HEAVIEST_ITEMS = 15
 
-LANG = locale.getdefaultlocale()[0]
-if LANG.startswith("ru"):
-    TEXTS = {
-        "enter_path": "Укажи путь к папке для анализа (например, C:/ или /home/user): ",
-        "top_list": "\n[ТОП ЭЛЕМЕНТОВ ПО РАЗМЕРУ]",
-        "choose_next": "\nВведите номер папки, чтобы провалиться в неё, или нажмите Enter для выхода: ",
-        "scanning": "Сканируем",
-    }
-else:
-    TEXTS = {
-        "enter_path": "Enter a folder path to analyze (e.g., C:/ or /home/user): ",
-        "top_list": "\n[TOP ITEMS BY SIZE]",
-        "choose_next": "\nEnter a number to drill into that folder or press Enter to exit: ",
-        "scanning": "Scanning",
-    }
+TEXTS = {
+    "enter_path": "Enter a folder path to analyze (e.g., C:/ or /home/user): ",
+    "top_list": "\n[TOP ITEMS BY SIZE]",
+    "choose_next": "\nEnter a number to drill into that folder or press Enter to exit: ",
+    "scanning": "Scanning",
+}
 
 
 def get_size(path: str) -> int:
