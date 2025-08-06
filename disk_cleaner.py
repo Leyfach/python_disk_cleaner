@@ -1,38 +1,37 @@
-import locale
-from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam
+import os
+from pathlib import Path
+import openai
+from typing import List, Tuple
 
-GPT_ENABLED = True # Set to False to disable AI-powered analysis
-OPENAI_API_KEY = "your_openai_api_key"
-client = OpenAI(api_key=OPENAI_API_KEY)
+from gpt_helper import ask_gpt_about_file, GPT_ENABLED
 
-LANG = locale.getdefaultlocale()[0]
+TOP_HEAVISET_DIRS = 15
 
-def ask_gpt_about_file(path: str, size_bytes: int) -> str:
-    size_mb = round(size_bytes / (1024**2), 2)
-
-    if LANG.startswith("ru"):
-        prompt = f"""
-Файл: {path}
-Размер: {size_mb} МБ
-
-Можно ли удалить этот файл без вреда для системы или приложений?
-Ответь 'Да' или 'Нет' и кратко объясни.
-"""
-    else:
-        prompt = f"""
-File: {path}
-Size: {size_mb} MB
-
-Can this file be safely deleted without harming the system or apps?
-Reply 'Yes' or 'No' and briefly explain.
-"""
-
+def get_size(path: str) -> int:
+    total_size = 0
     try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response.choices[0].message.content.strip()
+        for dirpath, _, filenames in os.walk(path):
+            for f in filenames:
+                try:
+                    fp = os.path.join(dirpath, f)
+                    total_size += os.path.getsize(fp)
+                except Exception as e:
+                    continue
     except Exception as e:
-        return f"[GPT ERROR] {e}"
+        pass
+    return total_size
+
+def scan_folders(root_path: str, limit=TOP_HEAVISET_DIRS) -> List[Tuple[str, int]]:
+    folder_sizes = []
+    root = Path(root_path)
+    for p in root.iterdir():
+        if p.is_dir():
+            print(f"Scanning {p}...")
+            size = get_size(str(p))
+            folder_sizes.append((str(p), size))
+
+    folder_sizes.sort(key=lambda x: x[1], reverse=True)
+    return folder_sizes[:limit]
+
+
+            

@@ -1,11 +1,12 @@
-import openai
 import locale
+from openai import OpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 GPT_ENABLED = True # Set to False to disable AI-powered analysis
 OPENAI_API_KEY = "your_openai_api_key"
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-LANG = locale.getdefaultlocale()[0]  # for example 'ru_RU' или 'en_US'
+LANG = locale.getdefaultlocale()[0]
 
 def ask_gpt_about_file(path: str, size_bytes: int) -> str:
     size_mb = round(size_bytes / (1024**2), 2)
@@ -28,10 +29,10 @@ Reply 'Yes' or 'No' and briefly explain.
 """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content.strip()
     except Exception as e:
         return f"[GPT ERROR] {e}"
