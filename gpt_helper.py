@@ -1,29 +1,16 @@
-import locale
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
 load_dotenv()
 
-GPT_ENABLED = True # Set to False to disable AI-powered analysis
+GPT_ENABLED = False  # Set to True to enable AI-powered analysis
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
-
-LANG = locale.getdefaultlocale()[0]
 
 def ask_gpt_about_file(path: str, size_bytes: int) -> str:
     size_mb = round(size_bytes / (1024**2), 2)
 
-    if LANG.startswith("ru"):
-        prompt = f"""
-Файл: {path}
-Размер: {size_mb} МБ
-
-Можно ли удалить этот файл без вреда для системы или приложений?
-Либо же можно ли удалить некоторые содержимые этого файла или папки?
-Ответь 'Да' или 'Нет' и кратко объясни.
-"""
-    else:
-        prompt = f"""
+    prompt = f"""
 File: {path}
 Size: {size_mb} MB
 
